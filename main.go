@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const hammerURL = "https://sic-chatbot.up.railway.app/"
+const numWorkers = 4
 
 var (
 	wg        sync.WaitGroup
@@ -100,7 +100,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 		defer func() { <-limiter }()
 
-		for i := 0; i < runtime.NumCPU(); i++ {
+		for i := 0; i < numWorkers; i++ {
 			wg.Add(1)
 			go Send(&wg, timeout, client, allowedCodes)
 		}
