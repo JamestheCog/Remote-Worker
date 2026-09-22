@@ -108,8 +108,14 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+func HandleIndex(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("All's good!"))
+}
+
 func main() {
 	http.HandleFunc("/hit", HandleRequest)
+	http.HandleFunc("/", HandleIndex)
 
 	log.Println("Starting server now...")
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), nil); err != nil {
