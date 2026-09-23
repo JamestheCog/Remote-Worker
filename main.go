@@ -37,7 +37,7 @@ var (
 	limiter      = make(chan struct{}, 1)
 )
 
-func Send(wg *sync.WaitGroup, timeout context.Context, client *http.Client, allowedCodes []int) {
+func Send(wg *sync.WaitGroup, timeout context.Context, cancel context.CancelFunc, client *http.Client, allowedCodes []int) {
 	defer wg.Done()
 
 	for {
@@ -73,6 +73,7 @@ func Send(wg *sync.WaitGroup, timeout context.Context, client *http.Client, allo
 
 			res.Body.Close()
 			if !slices.Contains(allowedCodes, res.StatusCode) {
+				cancel()
 				return
 			}
 		}
@@ -102,7 +103,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 		for i := 0; i < numWorkers; i++ {
 			wg.Add(1)
-			go Send(&wg, timeout, client, allowedCodes)
+			go Send(&wg, timeout, cancel, client, allowedCodes)
 		}
 		wg.Wait()
 		log.Println("Done with the flood!")
